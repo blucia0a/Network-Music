@@ -1,0 +1,23 @@
+Pipeline:
+
+Phase 1: tcpdump -tnn -c 20000 -ien1
+
+produces output like:
+
+IP 192.168.0.4.54953 > 173.194.33.21.443: Flags [P.], seq 2174803272:2174803309, ack 75913239, win 65535, options [nop,nop,TS val 64433140 ecr 1704041441], length 37
+
+Can pipe that to...
+
+-----
+
+Phase 2: perl script.
+
+Script should take lines in, and make a map of hosts.  For each present host, there should be an associated (statically assigned?  dynamically mapped?) MIDI instrument and/or tone.  The script should output tuples like (MIDI cmd, instrument, tone, velocity,...).  By specifying the MIDI command, other MIDI parameters could be varied by the output of this tool.  Furthermore, there could be effects that we know about that, when certain events happen, could be modulated by traffic.
+
+These will be piped to...
+
+-----
+
+Phase 3: a C MIDI driver
+
+This will be hooked into CoreAudio.  The program will loop on STDIN reading MIDI commands from Phase 2.  When each tuple arrives, it is issued to the synth.
