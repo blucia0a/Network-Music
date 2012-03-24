@@ -24,9 +24,9 @@ enum {
 int voice = 0;
 
 typedef struct _cmd{
-  int hostNum;
-  int port;
-  int dir; 
+  int velocity;
+  int tone;
+  unsigned duration;
   bool full;
 } cmd;
 
@@ -70,9 +70,9 @@ void * sequence_play(void *p){
     while(1){
       pthread_mutex_lock(&(pps->lock)); 
       if(pps->cmdBuf->full){
-        curCmd.hostNum = pps->cmdBuf->hostNum;
-        curCmd.port = pps->cmdBuf->port;
-        curCmd.dir = pps->cmdBuf->dir;
+        curCmd.velocity = pps->cmdBuf->velocity;
+        curCmd.tone = pps->cmdBuf->tone;
+        curCmd.duration = pps->cmdBuf->duration;
         pps->cmdBuf->full = false;
         pthread_mutex_unlock(&(pps->lock));
         break;
@@ -80,35 +80,32 @@ void * sequence_play(void *p){
       pthread_mutex_unlock(&(pps->lock));
     }
 
-    int level = (int)((((float)(65536 - curCmd.port))/65536.0f) * 127.0f);
-    for(int i = 0; i < pps->numSegments; i++){
+    int tone = curCmd.tone;
+    int level = curCmd.velocity;
 
-      int tone = pps->tone[i] * (1 + curCmd.dir);
-      MIDIPacketList packetList;
+    MIDIPacketList packetList;
 
-      /*On*/
-      packetList.numPackets = 1;
-      packetList.packet[0].length = 3;
-      packetList.packet[0].data[0] = 0x90; // note ON
-      packetList.packet[0].data[1] = tone; // C
-      packetList.packet[0].data[2] = level; // velocity
-      packetList.packet[0].timeStamp = 0;
-      MIDISend(pps->portRef,pps->endpoint,&packetList); 
+    /*On*/
+    packetList.numPackets = 1;
+    packetList.packet[0].length = 3;
+    packetList.packet[0].data[0] = 0x90; // note ON
+    packetList.packet[0].data[1] = tone; // C
+    packetList.packet[0].data[2] = level; // velocity
+    packetList.packet[0].timeStamp = 0;
+    MIDISend(pps->portRef,pps->endpoint,&packetList); 
   
-      usleep( pps->duration[i] ); 
+    usleep( curCmd.duration ); 
 
-      /*Off*/
-      packetList.numPackets = 1;
-      packetList.packet[0].length = 3;
-      packetList.packet[0].data[0] = kMIDINoteOff; // note ON
-      packetList.packet[0].data[1] = tone; // C
-      packetList.packet[0].data[2] = level; // velocity
-      packetList.packet[0].timeStamp = 0;
-      MIDISend(pps->portRef,pps->endpoint,&packetList); 
+    /*Off*/
+    packetList.numPackets = 1;
+    packetList.packet[0].length = 3;
+    packetList.packet[0].data[0] = kMIDINoteOff; // note ON
+    packetList.packet[0].data[1] = tone; // C
+    packetList.packet[0].data[2] = level; // velocity
+    packetList.packet[0].timeStamp = 0;
+    MIDISend(pps->portRef,pps->endpoint,&packetList); 
       
-      usleep( pps->period[i] ); 
 
-    }
 
   }
    
@@ -153,7 +150,7 @@ int main(int argc, char *argv[])
 
   for(int i = 0; i < NUM_SYNTHS; i++){
     
-    MIDIEndpointRef e= MIDIGetDestination(i);
+    MIDIEndpointRef e = MIDIGetDestination(i);
 
     int numsegs;
     numsegs = 1;
@@ -181,24 +178,26 @@ int main(int argc, char *argv[])
 
   while(1){
 
-    int host;
-    int port;
-    int dir;
-    scanf("%d %d %d",&host,&port,&dir);
-    fprintf(stderr,"h=%u p=%u d=%u\n",host,port,dir);
+    int instrument;
+    int velocity;
+    int tone;
+    int duration;
+    scanf("%d %d %d %d",&instrument,&velocity,&tone,&duration);
+    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,tone,duration);
 
-    host = host % NUM_SYNTHS;
-    pthread_mutex_lock(&(sourceParams[host]->lock));
-    if( sourceParams[host]->cmdBuf->full == false ){
+    instrument = instrument % NUM_SYNTHS;
+
+    pthread_mutex_lock(&(sourceParams[instrument]->lock));
+    if( sourceParams[instrument]->cmdBuf->full == false ){
 
       /*full is false, so it is ok to put a command in*/
-      sourceParams[host]->cmdBuf->hostNum = host;
-      sourceParams[host]->cmdBuf->port = port;
-      sourceParams[host]->cmdBuf->dir = dir;
-      sourceParams[host]->cmdBuf->full = true;
+      sourceParams[instrument]->cmdBuf->velocity = velocity;
+      sourceParams[instrument]->cmdBuf->tone = tone;
+      sourceParams[instrument]->cmdBuf->duration = duration;
+      sourceParams[instrument]->cmdBuf->full = true;
      
     }
-    pthread_mutex_unlock(&(sourceParams[host]->lock));
+    pthread_mutex_unlock(&(sourceParams[instrument]->lock));
      
 
   }  
