@@ -4,7 +4,6 @@
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/ExtendedAudioFile.h>
 #include <ApplicationServices/ApplicationServices.h>
-#include "CAAudioUnitOutputCapturer.h"
 #include <pthread.h>
 #include <time.h>
 #include <stdio.h>
