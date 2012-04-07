@@ -31,7 +31,7 @@ while(<>){
 
 
   &addClientIfNew($srcip,$dstip);
-  if( $srcport > 41000 && $srcport < 41008 ){
+  if( $srcport >= 41000 && $srcport < 41008 ){
     
     &doInstrumentCommunication($srcport - 41000, $srcport,'send');
 
@@ -41,9 +41,9 @@ while(<>){
 
   }
 
-  if( $dstport > 41000 && $dstport < 41008 ){
+  if( $dstport >= 41000 && $dstport < 41008 ){
     
-    &doInstrumentCommunication($dstport - 41000, $dstport,'send');
+    &doInstrumentCommunication($dstport - 41000, $dstport,'recv');
 
   }else{
   
@@ -63,7 +63,7 @@ sub doInstrumentCommunication(){
   my $dir = 0;
   if($direction eq 'send'){ $dir = 0; }else{ $dir = 1; }
 
-  my $velocity = 127;
+  my $velocity = 117;
   my $tone = $ip * ($dir + 1);
   my $duration = int(rand(1000000)) + 500000;
 
