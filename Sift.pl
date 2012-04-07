@@ -41,7 +41,7 @@ sub doCommunication(){
 
   my $velocity = int((1.0 - ($port / 65536))*127);
   my $tone = $toneMap{$clientMap{$ip}} * ($dir+1);
-  my $duration = int(rand(500000)) + 500000;
+  my $duration = int(rand(1000000)) + 500000;
 
   #API is "instrument velocity tone duration"
   print "".$clientMap{$ip}." $velocity $tone $duration\n";
@@ -55,7 +55,7 @@ sub addClientIfNew(){
 
   if( !exists $clientMap{$srcip} ){
     $clientMap{$srcip} = $num_clients++;
-    $toneMap{$clientMap{$srcip}} = int(rand(20)) + 25; 
+    $toneMap{$clientMap{$srcip}} = int(rand(25)) + 15; 
     #print "New client: $srcip\n"
   } 
 
