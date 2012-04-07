@@ -10,10 +10,15 @@ my %toneMap;
 while(<>){
   
   chomp; 
-  my ($srcip,$dstip,$srcport,$dstport,$icmp) = split /\s+/; 
+  my ($srcip,$dstip,$srcport,$dstport,$icmp,$icmpsize) = split /\s+/; 
 
 
   if( defined $icmp ){
+
+    if( defined $icmpsize ){
+      warn "ICMP Size was $icmpsize\n";
+    }
+
     &addClientIfNew($srcip,$dstip);
     &doCommunication($srcip,1,'send');
     &doCommunication($dstip,1,'recv');
@@ -26,9 +31,45 @@ while(<>){
 
 
   &addClientIfNew($srcip,$dstip);
-  &doCommunication($srcip,$srcport,'send');
-  &doCommunication($dstip,$dstport,'recv');
+  if( $srcport > 41000 && $srcport < 41008 ){
+    
+    &doInstrumentCommunication($srcport - 41000, $srcport,'send');
 
+  }else{
+
+    &doCommunication($srcip,$srcport,'send');
+
+  }
+
+  if( $dstport > 41000 && $dstport < 41008 ){
+    
+    &doInstrumentCommunication($dstport - 41000, $dstport,'send');
+
+  }else{
+  
+    &doCommunication($dstip,$dstport,'recv');
+
+  }
+
+
+}
+
+
+sub doInstrumentCommunication(){
+
+  my $ip = shift;
+  my $port = shift;
+  my $direction = shift;
+  my $dir = 0;
+  if($direction eq 'send'){ $dir = 0; }else{ $dir = 1; }
+
+  my $velocity = 127;
+  my $tone = $ip * ($dir + 1);
+  my $duration = int(rand(1000000)) + 500000;
+
+  #API is "instrument velocity tone duration"
+  print "".$ip." $velocity $tone $duration\n";
+  
 }
 
 sub doCommunication(){
