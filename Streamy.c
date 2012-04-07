@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
   packetList.packet[0].data[2] = 127 & 0x7F; // velocity
   packetList.packet[0].timeStamp = 0;
     
-  result = MIDISend(outputPort, endpoint, &packetList);
+  //result = MIDISend(outputPort, endpoint, &packetList);
 
 
   for(int i = 0; i < NUM_SYNTHS; i++){
@@ -162,10 +162,13 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&(s->lock),NULL);
     
     s->id = i;
-  
+ 
+    int possiblenotes[15] = {36, 38, 40, 41, 43, 45, 47,
+                             48, 50, 52, 53, 55, 57, 59,
+                             60}; 
     for( int j = 0; j < numsegs; j++ ){
       
-      s->tone[j] = 0x20 + (rand() % 20);
+      s->tone[j] = possiblenotes[(rand() % 15) - 12];
       s->period[j] =  (1000000 + (rand() % 3000000));
       s->duration[j] =  (1000000 + (rand() % 2000000));
 
