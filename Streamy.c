@@ -13,6 +13,8 @@ int NUM_SYNTHS;
 int g_level;
 int doMouse = 0;
 
+MIDIPortRef outputPort;
+
 enum {
   kMIDINoteOff = 128,
   kMIDINoteOn = 144,
@@ -48,6 +50,32 @@ typedef struct _sequenceParams{
   MIDIEndpointRef endpoint;
   
 } sequenceParams;
+
+void stopAllSounds(int signum){
+
+  fprintf(stderr,"Stopping all sounds!\n");
+  for(int i = 0; i < 12; i++){
+
+    fprintf(stderr,"Stopping instrument %d...",i);
+    for(int j =0; j < 127; j++){
+
+      MIDIPacketList packetList;
+      packetList.numPackets = 1;
+      packetList.packet[0].length = 3;
+      packetList.packet[0].data[0] = kMIDINoteOff; // note ON
+      packetList.packet[0].data[1] = 0x7f & i; // C
+      packetList.packet[0].data[2] = 0; // velocity
+      packetList.packet[0].timeStamp = 0;
+      MIDIEndpointRef e = MIDIGetDestination(i);
+      MIDISend(outputPort, e, &packetList); 
+
+    }
+    fprintf(stderr,"Done!!\n");
+
+  } 
+  exit(0);
+}
+
 
 sequenceParams *newSeq(int num){
 
@@ -145,21 +173,9 @@ int main(int argc, char *argv[])
   NULL,
   &client);
 
-  MIDIEndpointRef endpoint = MIDIGetDestination(0);
-  
-  MIDIPortRef outputPort = NULL;
   MIDIOutputPortCreate(client, CFSTR("My output port"), &outputPort);
   
-  MIDIPacketList packetList;
-  packetList.numPackets = 1;
-  packetList.packet[0].length = 3;
-  packetList.packet[0].data[0] = 0x90; // note ON
-  packetList.packet[0].data[1] = 60 & 0x7F; // C
-  packetList.packet[0].data[2] = 127 & 0x7F; // velocity
-  packetList.packet[0].timeStamp = 0;
-    
-  //result = MIDISend(outputPort, endpoint, &packetList);
-
+  signal(SIGINT,stopAllSounds);
 
   for(int i = 0; i < NUM_SYNTHS; i++){
     
