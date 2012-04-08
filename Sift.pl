@@ -95,11 +95,11 @@ sub doInstrumentCommunication(){
   my $tone = 33;
   if( exists $noteSets{ $instrument } ){
 
-    $tone = $noteSets{ $instrument }->[int( rand( $#{$noteSets{ $instrument }} ) )];
+    $tone = $noteSets{ $instrument }->[int( rand( @{$noteSets{ $instrument }} ) )];
 
   }else{
 
-    $tone = $noteSets{ 'default' }->[int( rand( $#{$noteSets{ 'default' }} ) )];
+    $tone = $noteSets{ 'default' }->[int( rand( @{$noteSets{ 'default' }} ) )];
 
   }
 
@@ -123,11 +123,11 @@ sub doCommunication(){
   my $tone = 33;
   if( exists $noteSets{ $instrument } ){
     
-    $tone = $noteSets{ $instrument }->[int( rand( $#{$noteSets{ $instrument }} ) )];
+    $tone = $noteSets{ $instrument }->[int( rand( @{$noteSets{ $instrument }} ) )];
 
   }else{
 
-    $tone = $noteSets{ 'default' }->[int( rand( $#{$noteSets{ 'default' }} ) )];
+    $tone = $noteSets{ 'default' }->[int( rand( @{$noteSets{ 'default' }} ) )];
 
   }
 
