@@ -6,6 +6,7 @@ use strict;
 my $num_clients = 0;
 my %clientMap;
 my %toneMap;
+my @possibleNotes = (48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72); 
 
 while(<>){
   
@@ -58,18 +59,24 @@ while(<>){
 
 sub doInstrumentCommunication(){
 
-  my $ip = shift;
+  my $instrument = shift;
   my $port = shift;
   my $direction = shift;
   my $dir = 0;
   if($direction eq 'send'){ $dir = 0; }else{ $dir = 1; }
 
   my $velocity = 117;
-  my $tone = $ip * ($dir + 1);
+
+  my $tone = 0; 
+  if( !exists $toneMap{$instrument} ){
+    $toneMap{$instrument} = $possibleNotes[int(rand(14))]; 
+  }
+  $tone = $toneMap{$instrument} + ($dir * 12);
+
   my $duration = int(rand(1000000)) + 500000;
 
   #API is "instrument velocity tone duration"
-  print "".$ip." $velocity $tone $duration\n";
+  print "".$instrument." $velocity $tone $duration\n";
   
 }
 
@@ -82,7 +89,7 @@ sub doCommunication(){
   if($direction eq 'send'){ $dir = 0; }else{ $dir = 1; }
 
   my $velocity = int((1.0 - ($port / 65536))*127);
-  my $tone = $toneMap{$clientMap{$ip}} * ($dir+1);
+  my $tone = $toneMap{$clientMap{$ip}} + ($dir * 12);
   my $duration = int(rand(1000000)) + 500000;
 
   #API is "instrument velocity tone duration"
@@ -97,13 +104,13 @@ sub addClientIfNew(){
 
   if( !exists $clientMap{$srcip} ){
     $clientMap{$srcip} = $num_clients++;
-    $toneMap{$clientMap{$srcip}} = int(rand(25)) + 15; 
+    $toneMap{ $clientMap{$srcip} } = $possibleNotes[int(rand(14))]; 
     #print "New client: $srcip\n"
   } 
 
   if( !exists $clientMap{$dstip} ){
     $clientMap{$dstip} = $num_clients++;
-    $toneMap{$clientMap{$dstip}} = int(rand(20)) + 25; 
+    $toneMap{$clientMap{$dstip}} = $possibleNotes[int(rand(14))]; 
     #print "New client: $dstip\n"
   } 
 

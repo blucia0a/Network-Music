@@ -191,14 +191,14 @@ int main(int argc, char *argv[])
     scanf("%d %d %d %d",&instrument,&velocity,&tone,&duration);
 
     instrument = instrument % NUM_SYNTHS;
-    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,sourceParams[instrument]->tone[0],duration);
+    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,tone,duration);
 
     pthread_mutex_lock(&(sourceParams[instrument]->lock));
     if( sourceParams[instrument]->cmdBuf->full == false ){
 
       /*full is false, so it is ok to put a command in*/
       sourceParams[instrument]->cmdBuf->velocity = velocity;
-      sourceParams[instrument]->cmdBuf->tone = sourceParams[instrument]->tone[0];
+      sourceParams[instrument]->cmdBuf->tone = tone;//sourceParams[instrument]->tone[0];
       sourceParams[instrument]->cmdBuf->duration = duration;
       sourceParams[instrument]->cmdBuf->full = true;
      
