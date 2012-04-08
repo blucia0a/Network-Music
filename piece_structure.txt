@@ -1,0 +1,26 @@
+Part 1:
+
+Taiko section intro - 3m
+Fade in low bass rumble (nic plug 1) - 2m
+Bring in synth chords (nic plug 2) - 1m
+Start fading in chord extensions (nic plug 3-6) 3m - 4m
+
+Brandon improvises in browser on top
+David improvises on guitar / chord extension cables
+
+Part 2:
+
+Netcat free section  3m-4m
+ - quiet ping/pong
+ - fade out bass rumble
+ - Add rtorrent traffic on top
+ - Switch to instrument improvisation over a bed of network traffic
+
+Part 3: dismantling
+
+Transition pitched patches to percussion patches
+Drums + guitar continue improvising, more abrasive
+
+Cut instruments
+
+Unplug patches one by one, and fade out
