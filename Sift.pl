@@ -7,6 +7,8 @@ my $num_clients = 0;
 my %clientMap;
 
 my %noteSets;
+my %minDurations;
+my %maxDurations;
 
 if ($#ARGV != 0) {
   die("Usage: Sift.pl [config file]");
@@ -23,7 +25,9 @@ while(<FILE>){
   if( /default/i ){
 
     my @notes = split /\s+/;
-    shift @notes; 
+    shift @notes;
+    $minDurations{'default'} = shift @notes;
+    $maxDurations{'default'} = shift @notes;
     push @{$noteSets{'default'}}, @notes;
 
   }elsif( /instrument/i ){
@@ -31,6 +35,8 @@ while(<FILE>){
     my @notes = split /\s+/;
     my $iNum = shift @notes;
     $iNum =~ s/instrument//i;
+    $minDurations{$iNum} = shift @notes;
+    $maxDurations{$iNum} = shift @notes;
     push @{$noteSets{$iNum}}, @notes;
 
   }else{
@@ -93,17 +99,17 @@ sub doInstrumentCommunication(){
 
 
   my $tone = 33;
+  my $durationKey;
   if( exists $noteSets{ $instrument } ){
-
     $tone = $noteSets{ $instrument }->[int( rand( @{$noteSets{ $instrument }} ) )];
-
-  }else{
-
+    $durationKey = $instrument;
+  } else {
     $tone = $noteSets{ 'default' }->[int( rand( @{$noteSets{ 'default' }} ) )];
-
+    $durationKey = 'default';
   }
 
-  my $duration = int(rand(1000000)) + 500000;
+  # Bound the duration between min/max.
+  my $duration = &getDuration($durationKey);
 
   print "".$instrument." $velocity $duration $tone\n";
   
@@ -121,21 +127,27 @@ sub doCommunication(){
 
   my $instrument = $clientMap{$ip};
   my $tone = 33;
+  my $durationKey;
   if( exists $noteSets{ $instrument } ){
-    
     $tone = $noteSets{ $instrument }->[int( rand( @{$noteSets{ $instrument }} ) )];
-
+    $durationKey = $instrument;
   }else{
-
     $tone = $noteSets{ 'default' }->[int( rand( @{$noteSets{ 'default' }} ) )];
-
+    $durationKey = 'default';
   }
 
-  my $duration = int(rand(1000000)) + 500000;
+  my $duration = &getDuration($durationKey);
 
   #API is "instrument velocity tone duration"
   print "".$clientMap{$ip}." $velocity $duration $tone\n";
   
+}
+
+sub getDuration() {
+  my $key = shift;
+  my ($min, $max) = ($minDurations{$key}, $maxDurations{$key});
+
+  return $min + int(rand($max - $min));
 }
 
 sub directionTransform(){

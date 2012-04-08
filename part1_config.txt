@@ -1,15 +1,20 @@
 # Default the note set to just be C, Db, Eb, F
-Default 60 61 63 65
+Default 1000000 1500000 60 61 63 65
 
 # Bass rumble
-Instrument0 36 37 39 41
+Instrument0 10000000 20000000 48 49 51 53
+#36 37 39 41
 
 # Chords
 # Gb,Bb,Db / Ab,Bb,C,Eb / Bb,Db,Eb,F / C,Eb,F,Ab / Db,F,Ab,C / Gb,C,F / Eb,Ab,Db
-Instrument1 54,58,61 56,58,60,63 58,61,63,65 60,63,65,68 61,65,68,72 54,60,65 51,56,61
+Instrument1 1000000 1750000 54,58,61 56,58,60,63 58,61,63,65 60,63,65,68 61,65,68,72 54,60,65 51,56,61
 
 # Extensions
-Instrument2 84 87 89 
-Instrument3 90 91 92
-Instrument4 76 77 82 84
-Instrument5 104 106 99 108
+# violin
+Instrument2 500000 1250000 104 106 99 108
+# glock
+Instrument3 100000 350000 84 87 89 
+# piano
+Instrument4 500000 1500000 76 77 82 84
+# french horns
+Instrument5 500000 1250000 78 79 80
