@@ -5,7 +5,8 @@ use strict;
 
 my $num_clients = 0;
 my %clientMap;
-my %toneMap;
+
+my %noteSets;
 
 if ($#ARGV != 0) {
   die("Usage: Sift.pl [config file]");
@@ -14,11 +15,34 @@ if ($#ARGV != 0) {
 # Read in the config file.
 my $filename = shift @ARGV;
 open FILE, "<" . $filename or die $!;
-my @config = <FILE>;
+while(<FILE>){
+
+  chomp;
+  next if /#/;
+  next if $_ eq "";
+  if( /default/i ){
+
+    my @notes = split /\s+/;
+    shift @notes; 
+    push @{$noteSets{'default'}}, @notes;
+
+  }elsif( /instrument/i ){
+
+    my @notes = split /\s+/;
+    my $iNum = shift @notes;
+    $iNum =~ s/instrument//i;
+    push @{$noteSets{$iNum}}, @notes;
+
+  }else{
+
+    warn "Weird line in config file: \"$_\".  Ignoring it.\n";
+
+  }
+  
+}
 close(FILE);
 
-my @possibleNotes = split(/\s+/, $config[0]);
-my @specialInstrumentToneIndexes = split(/\s+/, $config[1]);
+#my @possibleNotes = split /\s+/, $config[0];
 
 while(<>){
   
@@ -67,8 +91,17 @@ sub doInstrumentCommunication(){
 
   my $velocity = 117;
 
-  my $toneIndex = $specialInstrumentToneIndexes[$instrument];
-  my $tone = $possibleNotes[$toneIndex] + ($dir * 12);
+
+  my $tone = 33;
+  if( exists $noteSets{ $instrument } ){
+
+    $tone = $noteSets{ $instrument }->[int( rand( $#{$noteSets{ $instrument }} ) )];
+
+  }else{
+
+    $tone = $noteSets{ 'default' }->[int( rand( $#{$noteSets{ 'default' }} ) )];
+
+  }
 
   my $duration = int(rand(1000000)) + 500000;
 
@@ -85,12 +118,36 @@ sub doCommunication(){
   if($direction eq 'send'){ $dir = 0; }else{ $dir = 1; }
 
   my $velocity = int((1.0 - ($port / 65536))*127);
-  my $tone = $toneMap{$clientMap{$ip}} + ($dir * 12);
+
+  my $instrument = $clientMap{$ip};
+  my $tone = 33;
+  if( exists $noteSets{ $instrument } ){
+    
+    $tone = $noteSets{ $instrument }->[int( rand( $#{$noteSets{ $instrument }} ) )];
+
+  }else{
+
+    $tone = $noteSets{ 'default' }->[int( rand( $#{$noteSets{ 'default' }} ) )];
+
+  }
+
   my $duration = int(rand(1000000)) + 500000;
 
   #API is "instrument velocity tone duration"
-  print "".$clientMap{$ip}." $velocity $duration $tone,35,42\n";
+  print "".$clientMap{$ip}." $velocity $duration $tone\n";
   
+}
+
+sub directionTransform(){
+  my $noteSpec = shift;
+
+  if( $noteSpec =~ /,/ ){
+    my @notes = split /,/, $noteSpec;
+    $_ = $_ + 12 for @notes;
+    return join ',',@notes;
+  }else{
+    return $noteSpec + 12;
+  }
 }
 
 sub addClientIfNew(){
@@ -100,14 +157,10 @@ sub addClientIfNew(){
 
   if( !exists $clientMap{$srcip} ){
     $clientMap{$srcip} = $num_clients++;
-    $toneMap{ $clientMap{$srcip} } = $possibleNotes[int(rand(14))]; 
-    #print "New client: $srcip\n"
   } 
 
   if( !exists $clientMap{$dstip} ){
     $clientMap{$dstip} = $num_clients++;
-    $toneMap{$clientMap{$dstip}} = $possibleNotes[int(rand(14))]; 
-    #print "New client: $dstip\n"
   } 
 
 }
