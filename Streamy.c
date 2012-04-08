@@ -89,7 +89,7 @@ void * sequence_play(void *p){
     packetList.numPackets = 1;
     packetList.packet[0].length = 3;
     packetList.packet[0].data[0] = 0x90; // note ON
-    packetList.packet[0].data[1] = tone; // C
+    packetList.packet[0].data[1] = 0x7f & tone; // C
     packetList.packet[0].data[2] = level; // velocity
     packetList.packet[0].timeStamp = 0;
     MIDISend(pps->portRef,pps->endpoint,&packetList); 
@@ -100,7 +100,7 @@ void * sequence_play(void *p){
     packetList.numPackets = 1;
     packetList.packet[0].length = 3;
     packetList.packet[0].data[0] = kMIDINoteOff; // note ON
-    packetList.packet[0].data[1] = tone; // C
+    packetList.packet[0].data[1] = 0x7f & tone; // C
     packetList.packet[0].data[2] = level; // velocity
     packetList.packet[0].timeStamp = 0;
     MIDISend(pps->portRef,pps->endpoint,&packetList); 
@@ -162,13 +162,16 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&(s->lock),NULL);
     
     s->id = i;
- 
-    int possiblenotes[15] = {36, 38, 40, 41, 43, 45, 47,
-                             48, 50, 52, 53, 55, 57, 59,
-                             60}; 
+    
+     
+    //int possiblenotes[15] = {36, 38, 40, 41, 43, 45, 47,
+    int possiblenotes[15] = {48, 50, 52, 53, 55, 57, 59,
+                             60, 62, 64, 65, 67, 69, 71,
+                             72}; 
+
     for( int j = 0; j < numsegs; j++ ){
-      
-      s->tone[j] = possiblenotes[(rand() % 15) - 12];
+            
+      s->tone[j] = possiblenotes[(rand() % 15)];
       s->period[j] =  (1000000 + (rand() % 3000000));
       s->duration[j] =  (1000000 + (rand() % 2000000));
 
@@ -186,16 +189,16 @@ int main(int argc, char *argv[])
     int tone;
     int duration;
     scanf("%d %d %d %d",&instrument,&velocity,&tone,&duration);
-    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,tone,duration);
 
     instrument = instrument % NUM_SYNTHS;
+    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,sourceParams[instrument]->tone[0],duration);
 
     pthread_mutex_lock(&(sourceParams[instrument]->lock));
     if( sourceParams[instrument]->cmdBuf->full == false ){
 
       /*full is false, so it is ok to put a command in*/
       sourceParams[instrument]->cmdBuf->velocity = velocity;
-      sourceParams[instrument]->cmdBuf->tone = tone;
+      sourceParams[instrument]->cmdBuf->tone = sourceParams[instrument]->tone[0];
       sourceParams[instrument]->cmdBuf->duration = duration;
       sourceParams[instrument]->cmdBuf->full = true;
      
