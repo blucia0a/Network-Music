@@ -75,8 +75,7 @@ sub doInstrumentCommunication(){
 
   my $duration = int(rand(1000000)) + 500000;
 
-  #API is "instrument velocity tone duration"
-  print "".$instrument." $velocity $tone $duration\n";
+  print "".$instrument." $velocity $duration $tone\n";
   
 }
 
