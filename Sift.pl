@@ -6,7 +6,18 @@ use strict;
 my $num_clients = 0;
 my %clientMap;
 my %toneMap;
-my @possibleNotes = (48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72); 
+
+if ($#ARGV != 0) {
+  die("Usage: Sift.pl [config file]");
+}
+
+# Read in the config file.
+my $filename = shift @ARGV;
+open FILE, "<" . $filename or die $!;
+my @config = <FILE>;
+close(FILE);
+
+my @possibleNotes = split(/\s+/, $config[0]);
 
 while(<>){
   
