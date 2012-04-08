@@ -24,19 +24,6 @@ while(<>){
   
   chomp; 
   my ($srcip,$dstip,$srcport,$dstport,$icmp,$icmpsize) = split /\s+/; 
-
-
-#  if( defined $icmp ){
-#
-#   
-#    if( defined $icmpsize ){
-#      warn "ICMP Size was $icmpsize\n";
-#    }
-#
-#    &addClientIfNew($srcip,$dstip);
-#    &doCommunication($srcip,1,'send');
-#    &doCommunication($dstip,1,'recv');
-#  }
   
   next if !defined $srcip;
   next if !defined $dstip;

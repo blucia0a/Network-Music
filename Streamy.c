@@ -25,7 +25,8 @@ int voice = 0;
 
 typedef struct _cmd{
   int velocity;
-  int tone;
+  int numNotes;
+  int tone[12];
   unsigned duration;
   bool full;
 } cmd;
@@ -68,44 +69,56 @@ void * sequence_play(void *p){
  
     cmd curCmd;
     while(1){
+
       pthread_mutex_lock(&(pps->lock)); 
+
       if(pps->cmdBuf->full){
+
         curCmd.velocity = pps->cmdBuf->velocity;
-        curCmd.tone = pps->cmdBuf->tone;
+        curCmd.numNotes = pps->cmdBuf->numNotes;
+        memcpy( curCmd.tone, pps->cmdBuf->tone, curCmd.numNotes * sizeof(int) );
         curCmd.duration = pps->cmdBuf->duration;
         pps->cmdBuf->full = false;
         pthread_mutex_unlock(&(pps->lock));
         break;
+
       }
+
       pthread_mutex_unlock(&(pps->lock));
     }
 
-    int tone = curCmd.tone;
+    //int tone = curCmd.tone;
     int level = curCmd.velocity;
 
     MIDIPacketList packetList;
 
-    /*On*/
-    packetList.numPackets = 1;
-    packetList.packet[0].length = 3;
-    packetList.packet[0].data[0] = 0x90; // note ON
-    packetList.packet[0].data[1] = 0x7f & tone; // C
-    packetList.packet[0].data[2] = level; // velocity
-    packetList.packet[0].timeStamp = 0;
-    MIDISend(pps->portRef,pps->endpoint,&packetList); 
+    for(int i = 0; i < curCmd.numNotes; i++){
+      
+      /*On*/
+      packetList.numPackets = 1;
+      packetList.packet[0].length = 3;
+      packetList.packet[0].data[0] = 0x90; // note ON
+      packetList.packet[0].data[1] = 0x7f & curCmd.tone[i]; // C
+      packetList.packet[0].data[2] = level; // velocity
+      packetList.packet[0].timeStamp = 0;
+      MIDISend(pps->portRef,pps->endpoint,&packetList); 
   
+    }
+
     usleep( curCmd.duration ); 
 
-    /*Off*/
-    packetList.numPackets = 1;
-    packetList.packet[0].length = 3;
-    packetList.packet[0].data[0] = kMIDINoteOff; // note ON
-    packetList.packet[0].data[1] = 0x7f & tone; // C
-    packetList.packet[0].data[2] = level; // velocity
-    packetList.packet[0].timeStamp = 0;
-    MIDISend(pps->portRef,pps->endpoint,&packetList); 
-      
+    for(int i = 0; i < curCmd.numNotes; i++){
 
+      /*Off*/
+      packetList.numPackets = 1;
+      packetList.packet[0].length = 3;
+      packetList.packet[0].data[0] = kMIDINoteOff; // note ON
+      packetList.packet[0].data[1] = 0x7f & curCmd.tone[i]; // C
+      packetList.packet[0].data[2] = level; // velocity
+      packetList.packet[0].timeStamp = 0;
+      MIDISend(pps->portRef,pps->endpoint,&packetList); 
+
+    }
 
   }
    
@@ -186,19 +199,36 @@ int main(int argc, char *argv[])
 
     int instrument;
     int velocity;
-    int tone;
+    char tone[20];
+    int chord_tones[12];
     int duration;
-    scanf("%d %d %d %d",&instrument,&velocity,&tone,&duration);
+    scanf("%d %d %d %s",&instrument,&velocity,&duration,tone);
 
     instrument = instrument % NUM_SYNTHS;
-    fprintf(stderr,"%d %d %d %d\n",instrument,velocity,tone,duration);
+
+    fprintf(stderr,"%d %d %d ",instrument,velocity,duration);
+    memset(chord_tones, 0, 12 * sizeof(int));
+
+    char *val;
+    int noteCount = 0;
+    for(val = strtok(tone,",");
+        val && noteCount < 12;
+        val = strtok(NULL,",")){
+
+      chord_tones[noteCount++] = atoi(val); 
+      fprintf(stderr,"%d ",chord_tones[noteCount++]);
+
+    }
 
     pthread_mutex_lock(&(sourceParams[instrument]->lock));
+
     if( sourceParams[instrument]->cmdBuf->full == false ){
 
       /*full is false, so it is ok to put a command in*/
       sourceParams[instrument]->cmdBuf->velocity = velocity;
-      sourceParams[instrument]->cmdBuf->tone = tone;//sourceParams[instrument]->tone[0];
+      sourceParams[instrument]->cmdBuf->numNotes = noteCount;
+      memcpy(sourceParams[instrument]->cmdBuf->tone, chord_tones, noteCount * sizeof(int));
+      //sourceParams[instrument]->cmdBuf->tone = tone;
       sourceParams[instrument]->cmdBuf->duration = duration;
       sourceParams[instrument]->cmdBuf->full = true;
      
