@@ -18,6 +18,7 @@ my @config = <FILE>;
 close(FILE);
 
 my @possibleNotes = split(/\s+/, $config[0]);
+my @specialInstrumentToneIndexes = split(/\s+/, $config[1]);
 
 while(<>){
   
@@ -44,6 +45,7 @@ while(<>){
 
 
   &addClientIfNew($srcip,$dstip);
+
   if( $srcport >= 41000 && $srcport < 41008 ){
     
     &doInstrumentCommunication($srcport - 41000, $srcport,'send');
@@ -78,11 +80,8 @@ sub doInstrumentCommunication(){
 
   my $velocity = 117;
 
-  my $tone = 0; 
-  if( !exists $toneMap{$instrument} ){
-    $toneMap{$instrument} = $possibleNotes[int(rand(14))]; 
-  }
-  $tone = $toneMap{$instrument} + ($dir * 12);
+  my $toneIndex = $specialInstrumentToneIndexes[$instrument];
+  my $tone = $possibleNotes[$toneIndex] + ($dir * 12);
 
   my $duration = int(rand(1000000)) + 500000;
 
