@@ -89,7 +89,7 @@ sub doCommunication(){
   my $duration = int(rand(1000000)) + 500000;
 
   #API is "instrument velocity tone duration"
-  print "".$clientMap{$ip}." $velocity $tone $duration\n";
+  print "".$clientMap{$ip}." $velocity $duration $tone,35,42\n";
   
 }
 

@@ -208,6 +208,7 @@ int main(int argc, char *argv[])
 
     fprintf(stderr,"%d %d %d ",instrument,velocity,duration);
     memset(chord_tones, 0, 12 * sizeof(int));
+    fprintf(stderr,"<%s>\n",tone);
 
     char *val;
     int noteCount = 0;
@@ -216,9 +217,10 @@ int main(int argc, char *argv[])
         val = strtok(NULL,",")){
 
       chord_tones[noteCount++] = atoi(val); 
-      fprintf(stderr,"%d ",chord_tones[noteCount++]);
+      fprintf(stderr,"%d ",chord_tones[noteCount - 1]);
 
     }
+    fprintf(stderr,"\n");
 
     pthread_mutex_lock(&(sourceParams[instrument]->lock));
 
