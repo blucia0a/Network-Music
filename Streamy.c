@@ -10,8 +10,10 @@
 
 int NUM_SYNTHS;
 #define NUM_PORTS 6
+
 int g_level;
 int doMouse = 0;
+
 
 MIDIPortRef outputPort;
 
@@ -24,24 +26,23 @@ enum {
 
 
 int voice = 0;
+bool done;
+pthread_mutex_t doneLock;
 
 typedef struct _cmd{
+
   int velocity;
   int numNotes;
   int tone[12];
   unsigned duration;
   bool full;
+  bool isDoneMsg;
+
 } cmd;
 
 typedef struct _sequenceParams{
 
   int id;
-
-  int numSegments;
-
-  unsigned long *period;
-  unsigned long *duration;
-  unsigned *tone;
   unsigned *target;
   cmd *cmdBuf;
   pthread_mutex_t lock;
@@ -51,40 +52,24 @@ typedef struct _sequenceParams{
   
 } sequenceParams;
 
-void stopAllSounds(int signum){
 
-  fprintf(stderr,"Stopping all sounds!\n");
-  for(int i = 0; i < 12; i++){
+void stopMySounds(int signum){
 
-    fprintf(stderr,"Stopping instrument %d...",i);
-    for(int j =0; j < 127; j++){
+  pthread_exit(0);
 
-      MIDIPacketList packetList;
-      packetList.numPackets = 1;
-      packetList.packet[0].length = 3;
-      packetList.packet[0].data[0] = kMIDINoteOff; // note ON
-      packetList.packet[0].data[1] = 0x7f & i; // C
-      packetList.packet[0].data[2] = 0; // velocity
-      packetList.packet[0].timeStamp = 0;
-      MIDIEndpointRef e = MIDIGetDestination(i);
-      MIDISend(outputPort, e, &packetList); 
-
-    }
-    fprintf(stderr,"Done!!\n");
-
-  } 
-  exit(0);
 }
 
+void stopAllSounds(int signum){
+
+  fprintf(stderr,"Info: Thread %lu is handling SIGINT\n",(unsigned long)pthread_self());
+  done = true;
+
+}
 
 sequenceParams *newSeq(int num){
 
   sequenceParams *n = (sequenceParams *)malloc( sizeof(sequenceParams) ); 
-  n->period = (unsigned long *)malloc( num  * sizeof(unsigned long) );
-  n->duration = (unsigned long *)malloc( num  * sizeof(unsigned long) );
-  n->tone = (unsigned *)malloc( num  * sizeof(unsigned) );
   n->target = (unsigned *)malloc( num  * sizeof(unsigned) );
-  n->numSegments = num; 
   n->cmdBuf = (cmd *)calloc(1,sizeof(cmd));
   return n;
 
@@ -92,7 +77,21 @@ sequenceParams *newSeq(int num){
 
 void * sequence_play(void *p){
 
+  sigset_t set;
+  int s;
+  sigemptyset(&set);
+  sigaddset(&set, SIGINT);
+  s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+  if( s != 0 ){
+    fprintf(stderr,"Warning: Signals will not be properly handled.\n");
+  }else{
+    fprintf(stderr,"Info: Thread %lu is blocking SIGINT\n",(unsigned long)pthread_self());
+  }
+  
+  signal(SIGUSR1,stopMySounds);
+
   sequenceParams *pps = (sequenceParams *)p;
+
   while(1){
  
     cmd curCmd;
@@ -102,6 +101,7 @@ void * sequence_play(void *p){
 
       if(pps->cmdBuf->full){
 
+        curCmd.isDoneMsg = pps->cmdBuf->isDoneMsg;
         curCmd.velocity = pps->cmdBuf->velocity;
         curCmd.numNotes = pps->cmdBuf->numNotes;
         memcpy( curCmd.tone, pps->cmdBuf->tone, curCmd.numNotes * sizeof(int) );
@@ -114,10 +114,15 @@ void * sequence_play(void *p){
 
       pthread_mutex_unlock(&(pps->lock));
     }
+    
+    if( curCmd.isDoneMsg ){
 
-    //int tone = curCmd.tone;
+      fprintf(stderr,"EXITING!\n");
+      pthread_exit(NULL);
+
+    }
+
     int level = curCmd.velocity;
-
     MIDIPacketList packetList;
 
     for(int i = 0; i < curCmd.numNotes; i++){
@@ -162,6 +167,8 @@ int main(int argc, char *argv[])
   }
 
   srand(time(NULL));
+      
+  pthread_mutex_init(&doneLock,NULL);
 
   pthread_t sources[NUM_SYNTHS];
   sequenceParams *sourceParams[NUM_SYNTHS];
@@ -191,21 +198,6 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&(s->lock),NULL);
     
     s->id = i;
-    
-     
-    //int possiblenotes[15] = {36, 38, 40, 41, 43, 45, 47,
-    int possiblenotes[15] = {48, 50, 52, 53, 55, 57, 59,
-                             60, 62, 64, 65, 67, 69, 71,
-                             72}; 
-
-    for( int j = 0; j < numsegs; j++ ){
-            
-      s->tone[j] = possiblenotes[(rand() % 15)];
-      s->period[j] =  (1000000 + (rand() % 3000000));
-      s->duration[j] =  (1000000 + (rand() % 2000000));
-
-    }
-      
 
     pthread_create( &sources[i], NULL, sequence_play, (void *)s );
     
@@ -246,15 +238,41 @@ int main(int argc, char *argv[])
       sourceParams[instrument]->cmdBuf->velocity = velocity;
       sourceParams[instrument]->cmdBuf->numNotes = noteCount;
       memcpy(sourceParams[instrument]->cmdBuf->tone, chord_tones, noteCount * sizeof(int));
-      //sourceParams[instrument]->cmdBuf->tone = tone;
       sourceParams[instrument]->cmdBuf->duration = duration;
       sourceParams[instrument]->cmdBuf->full = true;
      
     }
     pthread_mutex_unlock(&(sourceParams[instrument]->lock));
      
+    if( done ){
+
+      for(int inst = 0; inst < NUM_SYNTHS; inst++){
+
+        fprintf(stderr,"Killing instrument %d\n",inst);
+        pthread_kill(sources[inst],SIGUSR1);
+        pthread_join(sources[inst],NULL);
+        fprintf(stderr,"Info: Thread %lu is shutdown.  Turning off it's stuff...",(unsigned long)sources[inst]);
+
+        MIDIEndpointRef ep = MIDIGetDestination(inst);
+        MIDIPacketList packetList;
+        for(int i = 0; i < 127; i++){
+          packetList.numPackets = 1;
+          packetList.packet[0].length = 3;
+          packetList.packet[0].data[0] = kMIDINoteOff; // note ON
+          packetList.packet[0].data[1] = 0x7f & i; // C
+          packetList.packet[0].data[2] = 127; // velocity
+          packetList.packet[0].timeStamp = 0;
+          MIDISend(outputPort,ep,&packetList); 
+        }
+
+        fprintf(stderr,"done!\n");
+
+      }
+      return 0;
+
+    }
 
   }  
 
-  return(0);
+  return 0;
 }
