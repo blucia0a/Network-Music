@@ -1,6 +1,42 @@
+# new shit
+
+Intro:
+
+- Brandon is playing intro_config.txt on his wireless interface and browsing the web.
+- David plays on keyboard the network music intro patch set.
+
 Part 1:
 
-Taiko section intro - 3m
+David: network music patch set (part 1)
+
+- David plugs in port 1 (patch 1, bass rumble).
+- Brandon crossfades out
+- David plugs in port 2 (patch 2, synth chords)
+- Brandon improvises on drums
+- David fades in port 3-6 slowly (patch 3-6, ext1-4 on patch set).
+
+Transition out of part 1:
+
+- David subtracts parts out, save piano pings for last. Unplug cables.
+- David sends Brandon traffic on the wireless network, port 41000-41006.
+- Brandon brings in bells via David's traffic.
+- David totally fades out to only bells, 3 minutes.
+
+Part 2:
+
+- David listens on wireless en1
+- David brings in high synth, other instruments as seeing fit.
+- Improvising on instruments
+- David stops playing, and fades stuff out
+- Last thing is high pitched repeat fade out, and synth fade out.
+
+
+
+
+---- old shit ---
+
+Part 1:
+
 Fade in low bass rumble (nic plug 1) - 2m
 Bring in synth chords (nic plug 2) - 1m
 Start fading in chord extensions (nic plug 3-6) 3m - 4m
