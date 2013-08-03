@@ -51,6 +51,9 @@ close(FILE);
 #my @possibleNotes = split /\s+/, $config[0];
 
 while(<>){
+  if ($_ =~ /^\s+/) {
+    next;
+  }
   
   chomp; 
   my ($srcip,$dstip,$srcport,$dstport,$icmp,$icmpsize) = split /\s+/; 
