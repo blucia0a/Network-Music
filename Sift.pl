@@ -51,7 +51,7 @@ close(FILE);
 #my @possibleNotes = split /\s+/, $config[0];
 
 while(<>){
-  if ($_ =~ /^\s+/) {
+  if ($_ !~ /^\d+\./) {
     next;
   }
   
