@@ -7,9 +7,11 @@
 #include <pthread.h>
 #include <time.h>
 #include <stdio.h>
+#include <iostream>
+#include <sstream>
 #include "Streamy.h"
 
-
+using namespace std;
 int NUM_SYNTHS;
 MIDIPortRef outputPort;
 bool done;
@@ -226,7 +228,10 @@ int main(int argc, char *argv[])
   }
 
   /*This is the main loop that parses incoming note commands from MIDIShark*/
-  while(1){
+  std::string line;
+  while(std::getline(std::cin, line)){
+
+    std::istringstream iss(line);
 
     int instrument;
     int velocity;
@@ -235,7 +240,8 @@ int main(int argc, char *argv[])
     int duration;
 
     /*Scan a line of input*/ 
-    scanf("%d %d %d %s",&instrument,&velocity,&duration,tone);
+    iss >> instrument >> velocity >> duration >> tone; 
+
 
     /*
      Mod the instrument number to be sure it is in the range of
